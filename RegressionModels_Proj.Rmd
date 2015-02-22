@@ -1,20 +1,74 @@
 ---
-title: "RegressionModels_Proj"
+title: "Car Transmision and Miles Per Gallon V2"
 output: html_document
 ---
+Motor Trend, a magazine about the automobile industry
+Looking at a data set of a collection of cars, they are interested in exploring the relationship between a set of variables and miles per gallon (MPG) (outcome). They are particularly interested in the following two questions:
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+  “Is an automatic or manual transmission better for MPG”
+  "Quantify the MPG difference between automatic and manual transmissions"
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
 
 ```{r}
-summary(cars)
+library(ggplot2)
+library(caret)
+data(mtcars)
+summary(mtcars)
+#mtcars$am = ifelse(mtcars$am = 0, 'manual', )
 ```
 
 You can also embed plots, for example:
 
 ```{r, echo=FALSE}
-plot(cars)
+plot(mtcars$mpg ~ ., data = mtcars)
+plot(factor(mtcars$am), mtcars$mpg,data=mtcars)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+```{r}
+fit = lm(mpg ~ ., data=mtcars)
+coef(fit)
+
+
+```
+
+```{r}
+qq <- qplot(am+ disp,mpg, colour = gear, data=mtcars)
+qq + geom_smooth(method='lm', formula = y~x)
+
+qq <- qplot(hp, mpg, colour = factor(am), data=mtcars)
+qq + geom_smooth(method='lm', formula = y~x)
+
+qq <- qplot(cyl, mpg, colour = factor(am), data=mtcars)
+qq + geom_smooth(method='lm', formula = y~x)
+
+qq <- qplot(disp, mpg, colour = factor(am), data=mtcars)
+qq + geom_smooth(method='lm', formula = y~x)
+
+qq <- qplot(drat, mpg, colour = factor(am), data=mtcars)
+qq + geom_smooth(method='lm', formula = y~x)
+
+qq <- qplot(wt, mpg, colour = factor(am), data=mtcars)
+qq + geom_smooth(method='lm', formula = y~x)
+
+qq <- qplot(qsec, mpg, colour = factor(am), data=mtcars)
+qq + geom_smooth(method='lm', formula = y~x)
+
+qq <- qplot(vs, mpg, colour = factor(am), data=mtcars)
+qq + geom_smooth(method='lm', formula = y~x)
+
+qq <- qplot(gear, mpg, colour = factor(am), data=mtcars)
+qq + geom_smooth(method='lm', formula = y~x)
+
+qq <- qplot(carb, mpg, colour = factor(am), data=mtcars)
+qq + geom_smooth(method='lm', formula = y~x)
+
+```
+
+```{r}
+featurePlot(x=mtcars[,c("cyl", "disp")], y = mtcars$mpg, plot = "pairs")
+
+```
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.   
+
+Appendix
+
