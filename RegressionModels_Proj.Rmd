@@ -1,45 +1,130 @@
 ---
-title: "Car Transmision and Miles Per Gallon V2"
-output: html_document
+title: "JHU Regression Models Project"
+author: "Ahmed Assal"
+output:
+  html_document:
+    fig_caption: yes
+    number_sections: yes
+    theme: flatly
 ---
+#Executive Summary   
+   
+#Study
+##Context
 Motor Trend, a magazine about the automobile industry
 Looking at a data set of a collection of cars, they are interested in exploring the relationship between a set of variables and miles per gallon (MPG) (outcome). They are particularly interested in the following two questions:
 
   “Is an automatic or manual transmission better for MPG”
-  "Quantify the MPG difference between automatic and manual transmissions"
+  "Quantify the MPG difference between automatic and manual transmissions"  
+  
+##The Question
+Take the mtcars data set and write up an analysis to answer their question using regression models and exploratory data analyses.  
 
+##Data     
+###Description     
+The data was extracted from the 1974 Motor Trend US magazine, and comprises fuel consumption and 10 aspects of automobile design and performance for 32 automobiles (1973–74 models).
 
-```{r}
+###Format
+A data frame with 32 observations on 11 variables.
+
+[, 1]   mpg   Miles/(US) gallon   
+[, 2]   cyl   Number of cylinders   
+[, 3]   disp  Displacement (cu.in.)   
+[, 4]   hp    Gross horsepower   
+[, 5]   drat  Rear axle ratio   
+[, 6]   wt    Weight (lb/1000)   
+[, 7]   qsec  1/4 mile time   
+[, 8]   vs    V/S   
+[, 9]   am    Transmission (0 = automatic, 1 = manual)   
+[,10]   gear  Number of forward gears   
+[,11]   carb  Number of carburetors       
+
+##Data Processing
+###Packages Loading
+```{r results='hide'}
 library(ggplot2)
 library(caret)
+library(dplyr)
+library(bitops)
+library(RCurl)
+```
+
+###Data Loading and Transofrmation
+We load the data and convert am, gear, cyl, carb and vs variables to factor variables.   
+```{r}
 data(mtcars)
-summary(mtcars)
-#mtcars$am = ifelse(mtcars$am = 0, 'manual', )
+mtcarsOld = mtcars
+mtcars$am   = factor(mtcars$am,labels=c("automatic","manual"))
+mtcars$gear = factor(mtcars$gear)
+mtcars$cyl  = factor(mtcars$cyl)
+mtcars$carb = factor(mtcars$carb)
+mtcars$vs   = factor(mtcars$vs)
 ```
 
-You can also embed plots, for example:
+###Exploratory Analysis
+####Are the vairables correlated?
+To explore the relationship of the variable under study, mpg, with the other variables in the dataset, we plot mpg against each of the other variables(see appendix - fig.1). 
 
-```{r, echo=FALSE}
-plot(mtcars$mpg ~ ., data = mtcars)
-plot(factor(mtcars$am), mtcars$mpg,data=mtcars)
-```
+####Finding highly correlated variables
+We try find the highly correlated variables which should not be included in the model collectively as predictors. 
 
 ```{r}
-fit = lm(mpg ~ ., data=mtcars)
-coef(fit)
+c=cor(mtcarsOld)
+corIndices = findCorrelation(c, cutoff = 0.75)
+mtcars[,corIndices]
+```
+
+We find that cyl, disp, mpg, and am are highly correlated. mpg is the output variable. am is the variable under study so we will include it while cyl, and disp should not be both included in the model. We will leave the step function design fine tune the selection process.  
+
+#### The effect of transmission type on the fuel consumption
+Also, to compare the effect of the type of transmission of the fuel consumption, we plot the different distributions of mpg vs transmission type(see appendix - fig.2). The figure shows that manual transmission cars tend to consumer more fuel.  
+
+###Regression Analysis   
+First, we build a base regression model that include all variablea as predictors for the MPG then we use the step function to build further linear models to select the most approprate variables as predictors while eliminating those that do not add much to the model.   
+
+```{r, results='hide'}
+baseModel = lm(mpg ~., data= mtcars)
+bestModel = step(baseModel, direction = "both")
+```
+As we can see, the algorithm has selected cyl, hp, wt and am as predictors. Also, this model, bestModel, has successflly explained more than 83% of the variablilty of the data.   
+```{r}
+summary(bestModel)
+```   
+
+#Results
+
+
+
+
+```{r}
+#fit = lm(mpg ~ ., data=mtcars)
+#coef(fit)
 
 
 ```
 
-```{r}
-qq <- qplot(am+ disp,mpg, colour = gear, data=mtcars)
-qq + geom_smooth(method='lm', formula = y~x)
+#Appendix
+##Exploratory features plot   
+```{r appendix-fig1, fig.width=7, fig.cap="Figure 1. Featues plot for the dataset",  echo= FALSE}
+#featurePlot(x=mtcars[,c("cyl", "disp")], y = mtcars$mpg, plot = "pairs")
+featurePlot(x=mtcars[,-1], y = mtcars$mpg, plot = "pairs")
+```
 
+##Miles per gallon vs. transmission type
+```{r, fig.cap="Figure 2. MPG VS. Transmission Type", echo=FALSE}
+#plot(mtcars$mpg ~ ., data = mtcars)
+#plot(factor(mtcars$am), mtcars$mpg,data=mtcars)
+pp <- ggplot(mtcars, aes(am, mpg))
+pp + geom_boxplot(aes(fill= am)) + geom_jitter()
+```
+
+##Exploration of other linear models
+```{r echo=FALSE}
 qq <- qplot(hp, mpg, colour = factor(am), data=mtcars)
 qq + geom_smooth(method='lm', formula = y~x)
 
 qq <- qplot(cyl, mpg, colour = factor(am), data=mtcars)
-qq + geom_smooth(method='lm', formula = y~x)
+qq + geom_smooth(method='lm', formula = y~x, aes(group = 2)) 
 
 qq <- qplot(disp, mpg, colour = factor(am), data=mtcars)
 qq + geom_smooth(method='lm', formula = y~x)
@@ -54,21 +139,15 @@ qq <- qplot(qsec, mpg, colour = factor(am), data=mtcars)
 qq + geom_smooth(method='lm', formula = y~x)
 
 qq <- qplot(vs, mpg, colour = factor(am), data=mtcars)
-qq + geom_smooth(method='lm', formula = y~x)
+qq + geom_smooth(method='lm', formula = y~x, aes(group = 1))
 
 qq <- qplot(gear, mpg, colour = factor(am), data=mtcars)
-qq + geom_smooth(method='lm', formula = y~x)
+qq + geom_smooth(method='lm', formula = y~x, aes(group = 1)) 
 
 qq <- qplot(carb, mpg, colour = factor(am), data=mtcars)
-qq + geom_smooth(method='lm', formula = y~x)
+qq + geom_smooth(method='lm', formula = y~x, aes(group = 1))
 
-```
+```   
 
-```{r}
-featurePlot(x=mtcars[,c("cyl", "disp")], y = mtcars$mpg, plot = "pairs")
 
-```
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.   
-
-Appendix
 
