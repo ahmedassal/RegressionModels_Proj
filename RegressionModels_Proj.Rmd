@@ -2,23 +2,26 @@
 title: "JHU Regression Models Project"
 author: "Ahmed Assal"
 output:
+  pdf_document: default
   html_document:
     fig_caption: yes
     number_sections: yes
     theme: flatly
 ---
 #Executive Summary   
-   
+This study shows that the fuel consumption for manual transmission are better than automatic  transmission by a factor of 1.8. Cars of manual transmission can gain up to 7.24 more miles per galon than automatic transmission cars. This conclusion has been reached using linear regression analysis.   
+
 #Study
 ##Context
 Motor Trend, a magazine about the automobile industry
-Looking at a data set of a collection of cars, they are interested in exploring the relationship between a set of variables and miles per gallon (MPG) (outcome). They are particularly interested in the following two questions:
-
-  “Is an automatic or manual transmission better for MPG”
-  "Quantify the MPG difference between automatic and manual transmissions"  
+Looking at a data set of a collection of cars, they are interested in exploring the relationship between a set of variables and miles per gallon (MPG) (outcome). 
+     
+##The Questions
+They are particularly interested in the following two questions:   
+  “Is an automatic or manual transmission better for MPG”   
+  "Quantify the MPG difference between automatic and manual transmissions"     
   
-##The Question
-Take the mtcars data set and write up an analysis to answer their question using regression models and exploratory data analyses.  
+Take the mtcars data set and write up an analysis to answer their question using regression models and exploratory data analyses.   
 
 ##Data     
 ###Description     
@@ -63,21 +66,19 @@ mtcars$vs   = factor(mtcars$vs)
 
 ###Exploratory Analysis
 ####Are the vairables correlated?
-To explore the relationship of the variable under study, mpg, with the other variables in the dataset, we plot mpg against each of the other variables(see appendix - fig.1). 
+To explore the relationship of the variable under study, mpg, with the other variables in the dataset, we plot mpg against each of the other variables(see appendix - fig.1). We find out that most of these variableas are highly correlated with mpg as pairs, i.e. mpg vs. a preictor variable.   
 
 ####Finding highly correlated variables
 We try find the highly correlated variables which should not be included in the model collectively as predictors. 
 
 ```{r}
 c=cor(mtcarsOld)
-corIndices = findCorrelation(c, cutoff = 0.75)
-mtcars[,corIndices]
+corIndices = findCorrelation(c, cutoff = 0.75) ; print(corIndices)
 ```
-
-We find that cyl, disp, mpg, and am are highly correlated. mpg is the output variable. am is the variable under study so we will include it while cyl, and disp should not be both included in the model. We will leave the step function design fine tune the selection process.  
+We find that variables of indices 2, 3, 1, 9 which are  cyl, disp, mpg, and am are highly correlated. mpg is the output variable. am is the variable under study so we will include both of mpg and am while cyl, and disp should not be both included in the model. We will leave the step function to fine tune the selection process.  
 
 #### The effect of transmission type on the fuel consumption
-Also, to compare the effect of the type of transmission of the fuel consumption, we plot the different distributions of mpg vs transmission type(see appendix - fig.2). The figure shows that manual transmission cars tend to consumer more fuel.  
+Also, to compare the effect of the type of transmission of the fuel consumption, we plot the different distributions of mpg vs transmission type(see appendix - fig.2). The figure shows that manual transmission cars tend to consume less fuel.  
 
 ###Regression Analysis   
 First, we build a base regression model that include all variablea as predictors for the MPG then we use the step function to build further linear models to select the most approprate variables as predictors while eliminating those that do not add much to the model.   
@@ -86,66 +87,101 @@ First, we build a base regression model that include all variablea as predictors
 baseModel = lm(mpg ~., data= mtcars)
 bestModel = step(baseModel, direction = "both")
 ```
-As we can see, the algorithm has selected cyl, hp, wt and am as predictors. Also, this model, bestModel, has successflly explained more than 83% of the variablilty of the data.   
+As we can see, the algorithm has selected cyl, hp, wt and am as predictors.      
 ```{r}
 summary(bestModel)
 ```   
 
+###Residuals and diagonistics   
+To check residuals for normaility and homoskedasticity, we plot the residuals(see appendix - fig.3). We find that the residuals are normally distributed and homoskedastic.   
+
 #Results
+## Explanation of the variability of the data
+This model, bestModel, has successflly explained more than 83% of the variablilty of the data.
 
+## Interpretation of the best model coefficients   
+###mpg vs transmission control   
+Miles per gallon increases by a factor of 1.8 (1.8) with manual transmission.   
 
+###mpg vs hp   
+Miles per gallon decreases by a factor of 0.03 (-0.03) as horspower increases.   
 
+###mpg vs hp   
+Miles per gallon decreases by a factor of 2.5 (-2.5) for every increase of 1000lb in the weight.   
 
+###mpg vs cyl6/cyl8   
+Miles per gallon decreases by a factor of 3.03 (-3.03) for 6 cylinders and by a factor of 2.16 (-2.16) for 8 cylinders.   
+
+###Intercept   
+The intercept is at 33.7 mpg.   
+
+### P-value   
+The overall p-value is very small (1.506 x 10 ^ -10) which means that there are a very small uncertainty with the sign of the coefficients.  
+
+##Answers to the study questions   
+###"Is an automatic or manual transmission better for MPG”   
+As shown in this study, the manual transmission is better for fuel consumption, miles per gallon. This is demonestrated by the best fit model which estimates the decrease of fuel consumption by a factor of 1.8 for manual transmission.   
+
+###"Quantify the MPG difference between automatic and manual transmissions"    
+Fuel consumption, mpg, for manual transmission increases by a factor of 1.8 over automatic transmission. 
 ```{r}
-#fit = lm(mpg ~ ., data=mtcars)
-#coef(fit)
-
-
+manualData = mtcarsOld[ mtcarsOld$am == 0, 1]
+automaticData = mtcarsOld[mtcarsOld$am == 1, 1]
+manualCI = t.test(manualData, mu = 0)$conf.int
+automaticCI = t.test(automaticData, mu = 0)$conf.int
+print(manualCI);print(automaticCI)
 ```
+The 95% confidence interval for mpg for automatic transmission (15.3, 19)  while it is (20.67, 28.12) for the manual transmission. This is an evidence that manual transmission consumes less fuel. Manual transmission travels around 7.24 more miles per gallon, (24.39mpg), than automatic transmission (17.15 mpg). 
 
 #Appendix
 ##Exploratory features plot   
 ```{r appendix-fig1, fig.width=7, fig.cap="Figure 1. Featues plot for the dataset",  echo= FALSE}
 #featurePlot(x=mtcars[,c("cyl", "disp")], y = mtcars$mpg, plot = "pairs")
-featurePlot(x=mtcars[,-1], y = mtcars$mpg, plot = "pairs")
+#featurePlot(x=mtcars[,-1], y = mtcars$mpg, plot = "pairs")
+pairs(mpg ~ ., data= mtcars)
 ```
 
 ##Miles per gallon vs. transmission type
-```{r, fig.cap="Figure 2. MPG VS. Transmission Type", echo=FALSE}
+```{r appendix-fig2, fig.cap="Figure 2. MPG VS. Transmission Type", echo=FALSE}
 #plot(mtcars$mpg ~ ., data = mtcars)
 #plot(factor(mtcars$am), mtcars$mpg,data=mtcars)
 pp <- ggplot(mtcars, aes(am, mpg))
 pp + geom_boxplot(aes(fill= am)) + geom_jitter()
 ```
 
+##Residuals plot
+```{r appendix-fig3, fig.cap="Figure 3. Residuals", echo=FALSE}
+plot(bestModel)
+```   
+
 ##Exploration of other linear models
 ```{r echo=FALSE}
 qq <- qplot(hp, mpg, colour = factor(am), data=mtcars)
 qq + geom_smooth(method='lm', formula = y~x)
 
-qq <- qplot(cyl, mpg, colour = factor(am), data=mtcars)
-qq + geom_smooth(method='lm', formula = y~x, aes(group = 2)) 
+# qq <- qplot(cyl, mpg, colour = factor(am), data=mtcars)
+# qq + geom_smooth(method='lm', formula = y~x, aes(group = 2)) 
 
 qq <- qplot(disp, mpg, colour = factor(am), data=mtcars)
 qq + geom_smooth(method='lm', formula = y~x)
 
-qq <- qplot(drat, mpg, colour = factor(am), data=mtcars)
-qq + geom_smooth(method='lm', formula = y~x)
+# qq <- qplot(drat, mpg, colour = factor(am), data=mtcars)
+# qq + geom_smooth(method='lm', formula = y~x)
 
 qq <- qplot(wt, mpg, colour = factor(am), data=mtcars)
 qq + geom_smooth(method='lm', formula = y~x)
 
-qq <- qplot(qsec, mpg, colour = factor(am), data=mtcars)
-qq + geom_smooth(method='lm', formula = y~x)
+# qq <- qplot(qsec, mpg, colour = factor(am), data=mtcars)
+# qq + geom_smooth(method='lm', formula = y~x)
 
-qq <- qplot(vs, mpg, colour = factor(am), data=mtcars)
-qq + geom_smooth(method='lm', formula = y~x, aes(group = 1))
-
-qq <- qplot(gear, mpg, colour = factor(am), data=mtcars)
-qq + geom_smooth(method='lm', formula = y~x, aes(group = 1)) 
-
-qq <- qplot(carb, mpg, colour = factor(am), data=mtcars)
-qq + geom_smooth(method='lm', formula = y~x, aes(group = 1))
+# qq <- qplot(vs, mpg, colour = factor(am), data=mtcars)
+# qq + geom_smooth(method='lm', formula = y~x, aes(group = 1))
+# 
+# qq <- qplot(gear, mpg, colour = factor(am), data=mtcars)
+# qq + geom_smooth(method='lm', formula = y~x, aes(group = 1)) 
+# 
+# qq <- qplot(carb, mpg, colour = factor(am), data=mtcars)
+# qq + geom_smooth(method='lm', formula = y~x, aes(group = 1))
 
 ```   
 
